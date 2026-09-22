@@ -1,6 +1,24 @@
-import {sqliteTable,text,integer,index} from 'drizzle-orm/sqlite-core';
-export const settings=sqliteTable('settings',{key:text('key').primaryKey(),value:text('value').notNull()});
-export const tracks=sqliteTable('tracks',{id:text('id').primaryKey(),data:text('data').notNull()});
-export const posts=sqliteTable('posts',{id:text('id').primaryKey(),userId:text('user_id').notNull(),name:text('name').notNull(),kind:text('kind').notNull(),body:text('body').notNull(),rating:integer('rating'),parent:text('parent'),created:integer('created').notNull(),approved:integer('approved').notNull().default(0)},t=>[index('idx_posts_approved_created').on(t.approved,t.created)]);
-export const inquiries=sqliteTable('inquiries',{id:text('id').primaryKey(),userId:text('user_id').notNull(),name:text('name').notNull(),email:text('email').notNull(),kind:text('kind').notNull(),body:text('body').notNull(),created:integer('created').notNull()});
-export const orders=sqliteTable('orders',{id:text('id').primaryKey(),trackId:text('track_id').notNull(),fileKey:text('file_key').notNull(),title:text('title').notNull(),terms:text('terms').notNull(),amount:integer('amount').notNull()});
+import { pgTable, text, integer, timestamp } from "drizzle-orm/pg-core";
+
+// Orders record a completed Stripe checkout so downloads can be verified and
+// so a customer's purchased license/file never changes after the fact.
+export const orders = pgTable("orders", {
+  id: text("id").primaryKey(), // Stripe checkout session id (cs_...)
+  trackId: text("track_id").notNull(),
+  fileKey: text("file_key").notNull(),
+  title: text("title").notNull(),
+  terms: text("terms").notNull(),
+  amount: integer("amount").notNull(),
+  created: timestamp("created", { mode: "date" }).notNull().defaultNow(),
+});
+
+// Inquiries are public contact/collaboration messages. No account system:
+// anyone can send one, identified only by the name/email they type in.
+export const inquiries = pgTable("inquiries", {
+  id: text("id").primaryKey(),
+  name: text("name").notNull(),
+  email: text("email").notNull(),
+  kind: text("kind").notNull(),
+  body: text("body").notNull(),
+  created: timestamp("created", { mode: "date" }).notNull().defaultNow(),
+});
